@@ -4,250 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokémon World | Advanced SPA</title>
-    <script>
-        const app = {
-            state: {
-                pokemonData: [],
-                totalToFetch: 151 // Gen 1
-            },
-          const battleEngine = {
-            state: {
-                playerActive: 25, // Pikachu ID
-                oppActive: 94,    // Gengar ID
-                moves: []
-            },
+    
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "vv6zirs1gn");
+    </script>
 
-            initBattle: async function() {
-                this.logMessage("Loading battle data...");
-                
-                try {
-                    // Fetch Player Pokemon Data & Moves
-                    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${this.state.playerActive}`);
-                    const data = await res.json();
-                    
-                    // Extract first 4 moves
-                    const movePromises = data.moves.slice(0, 4).map(m => fetch(m.move.url).then(r => r.json()));
-                    const moveData = await Promise.all(movePromises);
-                    
-                    this.state.moves = moveData;
-                    this.renderMoves();
-                    this.logMessage(`Wild GENGAR appeared! What will ${data.name.toUpperCase()} do?`);
-
-                } catch(e) {
-                    this.logMessage("Failed to load battle parameters.");
-                }
-            },
-
-            renderMoves: function() {
-                const movesMenu = document.getElementById('moves-menu');
-                movesMenu.innerHTML = this.state.moves.map((m, index) => `
-                    <button class="action-btn" style="background: var(--${m.type.name}); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);" 
-                            onclick="battleEngine.executeMove(${index})">
-                        ${m.name.replace('-', ' ')}<br>
-                        <span style="font-size: 0.8rem;">PP ${m.pp} / PWR ${m.power || '--'}</span>
-                    </button>
-                `).join('');
-                
-                // Add a cancel button to go back to main menu
-                movesMenu.innerHTML += `<button class="action-btn" style="background: #2d3436; color: white;" onclick="battleEngine.hideMoves()">Back</button>`;
-            },
-
-            showMoves: function() {
-                document.getElementById('main-menu').style.display = 'none';
-                document.getElementById('moves-menu').classList.add('active');
-            },
-
-            hideMoves: function() {
-                document.getElementById('moves-menu').classList.remove('active');
-                document.getElementById('main-menu').style.display = 'grid';
-            },
-
-            logMessage: function(msg) {
-                document.getElementById('battle-message').innerText = msg;
-            },
-
-            executeMove: function(moveIndex) {
-                const move = this.state.moves[moveIndex];
-                this.hideMoves();
-                this.logMessage(`PIKACHU used ${move.name.toUpperCase()}!`);
-                
-                // Simulate attack animation and damage
-                setTimeout(() => {
-                    const hpBar = document.getElementById('opp-hp');
-                    const currentWidth = parseInt(hpBar.style.width) || 100;
-                    
-                    // Mock damage calculation: (Power / 100) * 40% of health + RNG
-                    const damage = move.power ? (move.power / 100) * 40 + (Math.random() * 10) : 5; 
-                    const newWidth = Math.max(0, currentWidth - damage);
-                    
-                    hpBar.style.width = `${newWidth}%`;
-                    
-                    if(newWidth <= 0) {
-                        this.logMessage("GENGAR fainted! You won!");
-                    } else {
-                        // Enemy Turn Mock
-                        setTimeout(() => this.enemyTurn(), 2000);
-                    }
-                }, 1500);
-            },
-
-            enemyTurn: function() {
-                this.logMessage("GENGAR used SHADOW BALL!");
-                setTimeout(() => {
-                    const hpBar = document.getElementById('player-hp');
-                    const currentWidth = parseInt(hpBar.style.width) || 100;
-                    hpBar.style.width = `${Math.max(0, currentWidth - 25)}%`;
-                    
-                    setTimeout(() => {
-                        this.logMessage("What will PIKACHU do?");
-                        this.hideMoves(); // Reset UI
-                    }, 1500);
-                }, 1500);
-            }
-        };
-
-        // Hook the initialization into the router
-        const originalNavigate = app.navigate;
-        app.navigate = function(viewId) {
-            originalNavigate.call(this, viewId);
-            if(viewId === 'battle' && battleEngine.state.moves.length === 0) {
-                battleEngine.initBattle();
-            }
-        };
-
-            // 1. Virtual Router
-            navigate: function(viewId) {
-                document.querySelectorAll('nav a').forEach(el => el.classList.remove('active-link'));
-                document.getElementById(`nav-${viewId}`).classList.add('active-link');
-
-                document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-                document.getElementById(`view-${viewId}`).classList.add('active');
-
-                if (viewId === 'pokedex' && this.state.pokemonData.length === 0) {
-                    this.fetchPokedex();
-                }
-            },
-
-            // 2. Optimized Data Fetching with Official CDN Routing
-            fetchPokedex: async function() {
-                const grid = document.getElementById('grid');
-                grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align: center;">Loading Network Data...</h3>';
-                
-                try {
-                    const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${this.state.totalToFetch}`);
-                    const data = await res.json();
-                    
-                    this.state.pokemonData = data.results.map((poke, index) => {
-                        const id = index + 1;
-                        // Mathematically pad the ID to 3 digits (e.g., 1 becomes '001')
-                        const paddedId = String(id).padStart(3, '0');
-                        
-                        return {
-                            id: id,
-                            paddedId: paddedId,
-                            name: poke.name,
-                            // Hijack the official high-res asset server
-                            image: `https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${paddedId}.png`
-                        };
-                    });
-
-                    this.renderGrid(this.state.pokemonData);
-                    this.initSearch();
-
-                } catch (error) {
-                    grid.innerHTML = '<h3 style="grid-column: 1/-1; color: red;">Failed to load API.</h3>';
-                }
-            },
-
-            // 3. Grid Rendering Engine
-            renderGrid: function(dataArray) {
-                const grid = document.getElementById('grid');
-                if (dataArray.length === 0) {
-                    grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align: center;">No Pokémon found.</h3>';
-                    return;
-                }
-
-                grid.innerHTML = dataArray.map(poke => `
-                    <article class="card" onclick="app.openModal(${poke.id}, '${poke.paddedId}')">
-                        <span class="id-badge">#${poke.paddedId}</span>
-                        <img src="${poke.image}" alt="${poke.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/140?text=Not+Found'">
-                        <h3>${poke.name}</h3>
-                    </article>
-                `).join('');
-            },
-
-            // 4. Live Search Engine
-            initSearch: function() {
-                document.getElementById('searchInput').addEventListener('input', (e) => {
-                    const term = e.target.value.toLowerCase();
-                    const filtered = this.state.pokemonData.filter(poke => 
-                        poke.name.includes(term) || poke.paddedId.includes(term)
-                    );
-                    this.renderGrid(filtered);
-                });
-            },
-
-            // 5. Asynchronous Detail Modal
-            openModal: async function(id, paddedId) {
-                const modal = document.getElementById('modal');
-                const img = document.getElementById('modal-img');
-                const name = document.getElementById('modal-name');
-                const statsContainer = document.getElementById('modal-stats');
-                const typesContainer = document.getElementById('modal-types');
-
-                // Route modal image to official CDN
-                img.src = `https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${paddedId}.png`;
-                name.innerText = "Loading...";
-                statsContainer.innerHTML = '';
-                typesContainer.innerHTML = '';
-                modal.classList.add('active');
-
-                try {
-                    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-                    const data = await res.json();
-
-                    name.innerText = data.name;
-
-                    typesContainer.innerHTML = data.types.map(t => 
-                        `<span style="background: var(--${t.type.name}); color: white; padding: 0.3rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">${t.type.name}</span>`
-                    ).join('');
-
-                    statsContainer.innerHTML = data.stats.map(s => {
-                        const statValue = s.base_stat;
-                        const percentage = Math.min((statValue / 150) * 100, 100); 
-                        const statName = s.stat.name.replace('special-attack', 'sp. atk').replace('special-defense', 'sp. def');
-                        
-                        return `
-                            <div class="stat-bar-container">
-                                <span class="stat-label">${statName}</span>
-                                <div class="stat-bar-bg">
-                                    <div class="stat-bar-fill" style="width: ${percentage}%;"></div>
-                                </div>
-                                <span style="margin-left: 10px; width: 30px; text-align: right;">${statValue}</span>
-                            </div>
-                        `;
-                    }).join('');
-
-                } catch (error) {
-                    name.innerText = "Error loading stats";
-                }
-            },
-
-            closeModal: function() {
-                document.getElementById('modal').classList.remove('active');
-            }
-        };
-
-        document.getElementById('modal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('modal')) app.closeModal();
-        });
-   <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "vv6zirs1gn");
-</script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
 
@@ -288,47 +53,7 @@
         nav ul a { text-decoration: none; color: var(--text-primary); font-weight: 600; cursor: pointer; transition: var(--transition); }
         nav ul a:hover, nav ul a.active-link { color: var(--accent-red); }
 
-        /* Battle Arena UI */
-        .battle-arena {
-            display: grid; grid-template-rows: auto 1fr auto; height: 70vh;
-            background: linear-gradient(to bottom, #74b9ff, #81ecec);
-            border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.1);
-            position: relative; margin: 0 5%; border: 4px solid var(--text-primary);
-        }
-        .combatant {
-            display: flex; align-items: center; justify-content: space-between; padding: 2rem;
-            position: absolute; width: 60%;
-        }
-        .combatant.opponent { top: 10%; right: 5%; flex-direction: row-reverse; }
-        .combatant.player { bottom: 25%; left: 5%; }
-        
-        .pokemon-sprite { width: 180px; filter: drop-shadow(0 20px 10px rgba(0,0,0,0.3)); }
-        .combatant.opponent .pokemon-sprite { transform: scaleX(-1); } /* Flip sprite */
-        
-        .stat-panel {
-            background: white; padding: 1rem 1.5rem; border-radius: 10px; border: 3px solid #2d3436;
-            box-shadow: 4px 4px 0 #2d3436; min-width: 250px;
-        }
-        .stat-panel h4 { text-transform: capitalize; margin-bottom: 0.5rem; font-size: 1.2rem; }
-        .hp-bar-track { background: #dfe6e9; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #b2bec3; }
-        .hp-bar-fill { height: 100%; background: #00b894; transition: width 0.3s ease; }
-        
-        /* Battle Controls */
-        .battle-controls {
-            position: absolute; bottom: 0; width: 100%; background: #2d3436; color: white;
-            display: grid; grid-template-columns: 1fr 1fr; border-top: 4px solid white;
-        }
-        .message-box { padding: 1.5rem; font-size: 1.2rem; font-weight: 600; border-right: 4px solid white; }
-        .action-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: white; padding: 4px; }
-        .action-btn {
-            background: #f1f2f6; border: none; font-size: 1.2rem; font-weight: 800; cursor: pointer;
-            text-transform: uppercase; transition: var(--transition); color: #2f3542;
-        }
-        .action-btn:hover { background: var(--accent-red); color: white; }
-        
-        /* Moves Grid */
-        .moves-grid { display: none; grid-template-columns: 1fr 1fr; gap: 4px; background: white; padding: 4px; }
-        .moves-grid.active { display: grid; }/* Hero */
+        /* Hero */
         .hero {
             text-align: center; padding: 8rem 20px; background: linear-gradient(135deg, var(--accent-red), #ff6b81);
             color: white; border-bottom-left-radius: 50px; border-bottom-right-radius: 50px; margin-bottom: 3rem;
@@ -340,7 +65,7 @@
         }
         .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
 
-        /* Controls: Search */
+        /* Pokedex Controls & Grid */
         .controls { display: flex; justify-content: center; margin-bottom: 3rem; padding: 0 5%; }
         .search-bar {
             width: 100%; max-width: 600px; padding: 1rem 1.5rem; font-size: 1.1rem;
@@ -348,8 +73,6 @@
             font-family: inherit;
         }
         .search-bar:focus { border-color: var(--accent-red); box-shadow: 0 0 0 4px rgba(255, 71, 87, 0.1); }
-
-        /* Grid */
         .container {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 2rem; padding: 0 5%; max-width: 1400px; margin: 0 auto 4rem; width: 100%;
@@ -379,9 +102,7 @@
             position: relative; transform: scale(0.8); transition: var(--transition); text-align: center;
         }
         .modal-overlay.active .modal-content { transform: scale(1); }
-        .close-btn {
-            position: absolute; top: 15px; right: 20px; font-size: 2rem; cursor: pointer; color: #aaa; transition: 0.2s;
-        }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 2rem; cursor: pointer; color: #aaa; transition: 0.2s; }
         .close-btn:hover { color: var(--accent-red); }
         .modal-img { width: 200px; height: 200px; margin-top: -80px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2)); }
         .stat-bar-container { display: flex; align-items: center; margin: 0.5rem 0; font-size: 0.9rem; font-weight: 600; }
@@ -389,11 +110,78 @@
         .stat-bar-bg { flex-grow: 1; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; }
         .stat-bar-fill { height: 100%; background: var(--accent-red); border-radius: 5px; }
 
+        /* Battle Arena UI */
+        .battle-arena {
+            display: grid; grid-template-rows: auto 1fr auto; height: 70vh;
+            background: linear-gradient(to bottom, #74b9ff, #81ecec);
+            border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.1);
+            position: relative; margin: 0 5% 4rem; border: 4px solid var(--text-primary);
+        }
+        .combatant {
+            display: flex; align-items: center; justify-content: space-between; padding: 2rem;
+            position: absolute; width: 60%;
+        }
+        .combatant.opponent { top: 10%; right: 5%; flex-direction: row-reverse; }
+        .combatant.player { bottom: 25%; left: 5%; }
+        .pokemon-sprite { width: 180px; filter: drop-shadow(0 20px 10px rgba(0,0,0,0.3)); }
+        .combatant.opponent .pokemon-sprite { transform: scaleX(-1); }
+        
+        .stat-panel {
+            background: white; padding: 1rem 1.5rem; border-radius: 10px; border: 3px solid #2d3436;
+            box-shadow: 4px 4px 0 #2d3436; min-width: 250px;
+        }
+        .stat-panel h4 { text-transform: capitalize; margin-bottom: 0.5rem; font-size: 1.2rem; }
+        .hp-bar-track { background: #dfe6e9; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #b2bec3; }
+        .hp-bar-fill { height: 100%; background: #00b894; transition: width 0.3s ease; }
+        
+        .battle-controls {
+            position: absolute; bottom: 0; width: 100%; background: #2d3436; color: white;
+            display: grid; grid-template-columns: 1fr 1fr; border-top: 4px solid white;
+        }
+        .message-box { padding: 1.5rem; font-size: 1.2rem; font-weight: 600; border-right: 4px solid white; }
+        .action-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: white; padding: 4px; }
+        .action-btn {
+            background: #f1f2f6; border: none; font-size: 1.2rem; font-weight: 800; cursor: pointer;
+            text-transform: uppercase; transition: var(--transition); color: #2f3542;
+        }
+        .action-btn:hover { background: var(--accent-red); color: white; }
+        
+        .moves-grid { display: none; grid-template-columns: 1fr 1fr; gap: 4px; background: white; padding: 4px; }
+        .moves-grid.active { display: grid; }
+
         footer { background: #1e272e; color: #d2dae2; text-align: center; padding: 2rem; margin-top: auto; }
     </style>
 </head>
 <body>
-  <main id="view-battle" class="view">
+
+    <nav>
+        <div class="logo" onclick="app.navigate('home')">PokéWorld</div>
+        <ul>
+            <li><a id="nav-home" class="active-link" onclick="app.navigate('home')">Home</a></li>
+            <li><a id="nav-pokedex" onclick="app.navigate('pokedex')">Pokédex</a></li>
+            <li><a id="nav-battle" onclick="app.navigate('battle')">Battle</a></li>
+        </ul>
+    </nav>
+
+    <main id="view-home" class="view active">
+        <header class="hero">
+            <h1>The Ultimate Database</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem;">Explore the original 151 Generation 1 Pokémon instantly.</p>
+            <button class="btn" onclick="app.navigate('pokedex')">Open Pokédex</button>
+        </header>
+    </main>
+
+    <main id="view-pokedex" class="view">
+        <div style="padding: 3rem 0 1rem; text-align: center;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">National Pokédex</h2>
+        </div>
+        <div class="controls">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search by name or ID (e.g., Pikachu, 025)...">
+        </div>
+        <section class="container" id="grid"></section>
+    </main>
+
+    <main id="view-battle" class="view">
         <div style="padding: 2rem 0; text-align: center;">
             <h2 style="font-size: 2.5rem;">Combat Simulator</h2>
         </div>
@@ -419,43 +207,14 @@
 
             <div class="battle-controls">
                 <div class="message-box" id="battle-message">What will PIKACHU do?</div>
-                
                 <div class="action-menu" id="main-menu">
                     <button class="action-btn" onclick="battleEngine.showMoves()">Fight</button>
                     <button class="action-btn" onclick="battleEngine.logMessage('Items are disabled in this simulation.')">Bag</button>
                     <button class="action-btn" onclick="battleEngine.logMessage('You cannot run from a trainer battle!')">Run</button>
                 </div>
-
-                <div class="moves-grid" id="moves-menu">
-                    </div>
+                <div class="moves-grid" id="moves-menu"></div>
             </div>
         </div>
-    </main>
-
-    <nav>
-        <div class="logo" onclick="app.navigate('home')">PokéWorld</div>
-        <ul>
-            <li><a id="nav-home" class="active-link" onclick="app.navigate('home')">Home</a></li>
-            <li><a id="nav-pokedex" onclick="app.navigate('pokedex')">Pokédex</a></li>
-        </ul>
-    </nav>
-
-    <main id="view-home" class="view active">
-        <header class="hero">
-            <h1>The Ultimate Database</h1>
-            <p style="font-size: 1.2rem; margin-bottom: 2rem;">Explore the original 151 Generation 1 Pokémon instantly.</p>
-            <button class="btn" onclick="app.navigate('pokedex')">Open Pokédex</button>
-        </header>
-    </main>
-
-    <main id="view-pokedex" class="view">
-        <div style="padding: 3rem 0 1rem; text-align: center;">
-            <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">National Pokédex</h2>
-        </div>
-        <div class="controls">
-            <input type="text" id="searchInput" class="search-bar" placeholder="Search by name or ID (e.g., Pikachu, 25)...">
-        </div>
-        <section class="container" id="grid"></section>
     </main>
 
     <div class="modal-overlay" id="modal">
@@ -464,11 +223,9 @@
             <img id="modal-img" class="modal-img" src="" alt="">
             <h2 id="modal-name" style="text-transform: capitalize; font-size: 2rem; margin-bottom: 1rem;">Name</h2>
             <div id="modal-types" style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem;"></div>
-            
             <div style="text-align: left;">
                 <h4 style="margin-bottom: 1rem; color: #2d3436; border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">Base Stats</h4>
-                <div id="modal-stats">
-                    </div>
+                <div id="modal-stats"></div>
             </div>
         </div>
     </div>
@@ -478,44 +235,48 @@
     </footer>
 
     <script>
+        // --- 1. CORE APPLICATION STATE & POKEDEX ---
         const app = {
             state: {
                 pokemonData: [],
-                totalToFetch: 151 // Gen 1
+                totalToFetch: 151 
             },
 
-            // 1. Virtual Router
             navigate: function(viewId) {
-                // Update Nav Links
                 document.querySelectorAll('nav a').forEach(el => el.classList.remove('active-link'));
-                document.getElementById(`nav-${viewId}`).classList.add('active-link');
+                const navElement = document.getElementById(`nav-${viewId}`);
+                if (navElement) navElement.classList.add('active-link');
 
-                // Switch Views
                 document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
                 document.getElementById(`view-${viewId}`).classList.add('active');
 
-                // Lazy load pokedex if not loaded
+                // Lazy loaders
                 if (viewId === 'pokedex' && this.state.pokemonData.length === 0) {
                     this.fetchPokedex();
                 }
+                if (viewId === 'battle' && battleEngine.state.moves.length === 0) {
+                    battleEngine.initBattle();
+                }
             },
 
-            // 2. Optimized Data Fetching
             fetchPokedex: async function() {
                 const grid = document.getElementById('grid');
                 grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align: center;">Loading Network Data...</h3>';
                 
                 try {
-                    // Fetch just the lightweight index, not full profiles
                     const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${this.state.totalToFetch}`);
                     const data = await res.json();
                     
-                    // Map index and mathematically calculate image URLs for instant rendering
-                    this.state.pokemonData = data.results.map((poke, index) => ({
-                        id: index + 1,
-                        name: poke.name,
-                        image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${index + 1}.png`
-                    }));
+                    this.state.pokemonData = data.results.map((poke, index) => {
+                        const id = index + 1;
+                        const paddedId = String(id).padStart(3, '0');
+                        return {
+                            id: id,
+                            paddedId: paddedId,
+                            name: poke.name,
+                            image: `https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${paddedId}.png`
+                        };
+                    });
 
                     this.renderGrid(this.state.pokemonData);
                     this.initSearch();
@@ -525,67 +286,58 @@
                 }
             },
 
-            // 3. Grid Rendering Engine
             renderGrid: function(dataArray) {
                 const grid = document.getElementById('grid');
                 if (dataArray.length === 0) {
                     grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align: center;">No Pokémon found.</h3>';
                     return;
                 }
-
                 grid.innerHTML = dataArray.map(poke => `
-                    <article class="card" onclick="app.openModal(${poke.id})">
-                        <span class="id-badge">#${poke.id.toString().padStart(3, '0')}</span>
-                        <img src="${poke.image}" alt="${poke.name}" loading="lazy">
+                    <article class="card" onclick="app.openModal(${poke.id}, '${poke.paddedId}')">
+                        <span class="id-badge">#${poke.paddedId}</span>
+                        <img src="${poke.image}" alt="${poke.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/140?text=Not+Found'">
                         <h3>${poke.name}</h3>
                     </article>
                 `).join('');
             },
 
-            // 4. Live Search Engine
             initSearch: function() {
                 document.getElementById('searchInput').addEventListener('input', (e) => {
                     const term = e.target.value.toLowerCase();
                     const filtered = this.state.pokemonData.filter(poke => 
-                        poke.name.includes(term) || poke.id.toString().includes(term)
+                        poke.name.includes(term) || poke.paddedId.includes(term)
                     );
                     this.renderGrid(filtered);
                 });
             },
 
-            // 5. Asynchronous Detail Modal
-            openModal: async function(id) {
+            openModal: async function(id, paddedId) {
                 const modal = document.getElementById('modal');
                 const img = document.getElementById('modal-img');
                 const name = document.getElementById('modal-name');
                 const statsContainer = document.getElementById('modal-stats');
                 const typesContainer = document.getElementById('modal-types');
 
-                // Reset modal content
-                img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+                img.src = `https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${paddedId}.png`;
                 name.innerText = "Loading...";
                 statsContainer.innerHTML = '';
                 typesContainer.innerHTML = '';
                 modal.classList.add('active');
 
                 try {
-                    // Fetch heavy details ONLY when a card is clicked
                     const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
                     const data = await res.json();
 
                     name.innerText = data.name;
 
-                    // Render Types
                     typesContainer.innerHTML = data.types.map(t => 
                         `<span style="background: var(--${t.type.name}); color: white; padding: 0.3rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">${t.type.name}</span>`
                     ).join('');
 
-                    // Render Stat Bars
                     statsContainer.innerHTML = data.stats.map(s => {
                         const statValue = s.base_stat;
-                        const percentage = Math.min((statValue / 150) * 100, 100); // Normalize out of 150 for UI
+                        const percentage = Math.min((statValue / 150) * 100, 100); 
                         const statName = s.stat.name.replace('special-attack', 'sp. atk').replace('special-defense', 'sp. def');
-                        
                         return `
                             <div class="stat-bar-container">
                                 <span class="stat-label">${statName}</span>
@@ -607,10 +359,99 @@
             }
         };
 
-        // Close modal on outside click
+        // --- 2. BATTLE ENGINE ---
+        const battleEngine = {
+            state: {
+                playerActive: 25, 
+                oppActive: 94,    
+                moves: []
+            },
+
+            initBattle: async function() {
+                this.logMessage("Loading battle data...");
+                try {
+                    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${this.state.playerActive}`);
+                    const data = await res.json();
+                    
+                    const movePromises = data.moves.slice(0, 4).map(m => fetch(m.move.url).then(r => r.json()));
+                    const moveData = await Promise.all(movePromises);
+                    
+                    this.state.moves = moveData;
+                    this.renderMoves();
+                    this.logMessage(`Wild GENGAR appeared! What will ${data.name.toUpperCase()} do?`);
+                } catch(e) {
+                    this.logMessage("Failed to load battle parameters.");
+                }
+            },
+
+            renderMoves: function() {
+                const movesMenu = document.getElementById('moves-menu');
+                movesMenu.innerHTML = this.state.moves.map((m, index) => `
+                    <button class="action-btn" style="background: var(--${m.type.name}); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);" 
+                            onclick="battleEngine.executeMove(${index})">
+                        ${m.name.replace('-', ' ')}<br>
+                        <span style="font-size: 0.8rem;">PP ${m.pp} / PWR ${m.power || '--'}</span>
+                    </button>
+                `).join('');
+                movesMenu.innerHTML += `<button class="action-btn" style="background: #2d3436; color: white;" onclick="battleEngine.hideMoves()">Back</button>`;
+            },
+
+            showMoves: function() {
+                document.getElementById('main-menu').style.display = 'none';
+                document.getElementById('moves-menu').classList.add('active');
+            },
+
+            hideMoves: function() {
+                document.getElementById('moves-menu').classList.remove('active');
+                document.getElementById('main-menu').style.display = 'grid';
+            },
+
+            logMessage: function(msg) {
+                document.getElementById('battle-message').innerText = msg;
+            },
+
+            executeMove: function(moveIndex) {
+                const move = this.state.moves[moveIndex];
+                this.hideMoves();
+                this.logMessage(`PIKACHU used ${move.name.toUpperCase()}!`);
+                
+                setTimeout(() => {
+                    const hpBar = document.getElementById('opp-hp');
+                    const currentWidth = parseInt(hpBar.style.width) || 100;
+                    
+                    const damage = move.power ? (move.power / 100) * 40 + (Math.random() * 10) : 5; 
+                    const newWidth = Math.max(0, currentWidth - damage);
+                    
+                    hpBar.style.width = `${newWidth}%`;
+                    
+                    if(newWidth <= 0) {
+                        this.logMessage("GENGAR fainted! You won!");
+                    } else {
+                        setTimeout(() => this.enemyTurn(), 2000);
+                    }
+                }, 1500);
+            },
+
+            enemyTurn: function() {
+                this.logMessage("GENGAR used SHADOW BALL!");
+                setTimeout(() => {
+                    const hpBar = document.getElementById('player-hp');
+                    const currentWidth = parseInt(hpBar.style.width) || 100;
+                    hpBar.style.width = `${Math.max(0, currentWidth - 25)}%`;
+                    
+                    setTimeout(() => {
+                        this.logMessage("What will PIKACHU do?");
+                        this.hideMoves(); 
+                    }, 1500);
+                }, 1500);
+            }
+        };
+
+        // --- 3. EVENT LISTENERS ---
         document.getElementById('modal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('modal')) app.closeModal();
         });
+
     </script>
 </body>
 </html>
